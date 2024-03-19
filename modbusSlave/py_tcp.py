@@ -1,4 +1,5 @@
 import socket
+import struct
 
 def ascii2hex(ascii_message):
     # Convert ASCII characters to hexadecimal representation
@@ -16,7 +17,7 @@ def hex2bytes(hex_message):
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Connect the socket to the port where the server is listening
-server_address = ('192.168.206.42', 502)
+server_address = ('192.168.250.75', 502)
 print('connecting to {} port {}'.format(*server_address))
 sock.connect(server_address)
 
@@ -41,13 +42,18 @@ while True:
 
     dataString = ""
     data = b''
-    while dataString[-2:] != "UU":
+    while b'UU' not in data[-2:]:  # Check for the byte sequence
         newByte = sock.recv(1)
         data += newByte
-        dataString += newByte.decode()
-    a2 = dataString.index("a2")+2
-    UU = dataString.index("UU")
-    print(data[a2:UU].hex())
+    print(data[:-2].hex()+ "\n")
+    if function == "h":
+        lastReg = data[-4:-2]
+        print(data[-4:-2].hex())
+
+        if int(register,16) <= 9:
+            print(int.from_bytes(lastReg, byteorder='big'))
+        else:
+            print(struct.unpack('!f', lastReg)[0])
         # print('received {!r}'.format(data.hex()))
 print('closing socket')
 sock.close()
