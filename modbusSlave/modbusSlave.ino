@@ -1,17 +1,7 @@
-/*
- created for arduino 25 Nov 2012
- by Tom Igoe
-
-ported for sparkfun esp32
-31.01.2017 by Jan Hendrik Berlinn
-/*  */
-
-
 #include <WiFi.h>
 #include <HardwareSerial.h>
 #include "i2cSI7021.h"
 #include "i2cMPU9250.h"
-
 
 #define I2C_SDA 25
 #define I2C_SCL 26
@@ -43,15 +33,15 @@ const char* password = "romeo1234";
 
 WiFiServer server(502);
 
-union intFloat {
-  unsigned int i;
+union shiftFloat {
   float f;
+  unsigned long l;
 };
-intFloat registers[13];
+unsigned int registers[13];
 
 
 void setup() {
-  registers[3].i = 62;
+  registers[3] = 62;
   Serial.begin(115200);
   Wire.begin(I2C_SDA,I2C_SCL);
   pinMode(LED1, OUTPUT);
@@ -95,7 +85,7 @@ void loop() {
       Serial.println("-----------------------------------");
       printHEX(data);
       Serial.println("-----------------------------------");
-      registers[6].i = int(millis()/1000);
+      registers[6] = int(millis()/1000);
       interpretMessage(data, client);
       modbus();
     }
@@ -106,52 +96,65 @@ void loop() {
 }
 
 void modbus() {
-  digitalWrite(LED1, registers[0].i > 0 ? HIGH : LOW);
-  digitalWrite(LED2, registers[1].i > 0 ? HIGH : LOW);
-  if (registers[2].i) {
+  digitalWrite(LED1, registers[0] > 0 ? HIGH : LOW);
+  digitalWrite(LED2, registers[1] > 0 ? HIGH : LOW);
+  if (registers[2]) {
     // for (int i = 0; i < 9; i++) {
-    //   Serial.println(registers[i].i);
+    //   Serial.println(registers[i]);
     // }
     Serial.print("Acc = ");
-    Serial.println(registers[9].f);
+    Serial.println(registers[9]);
     Serial.print("angularVel = ");
-    Serial.println(registers[10].f);
+    Serial.println(registers[10]);
     Serial.print("temp = ");
-    Serial.println(registers[11].f);
+    Serial.println(registers[11]);
     Serial.print("hum = ");
-    Serial.println(registers[12].f);
+    Serial.println(registers[12]);
   }
 
-  registers[4].i = int(millis()/1000);
+  registers[4] = int(millis()/1000);
 
   if (digitalRead(PUL1) == HIGH) {
     if (!pulsed) {
       Serial.println("pulsed!");
-      registers[5].i++;
+      registers[5]++;
     }
     pulsed = true;
-  } else {
+  }
+  else {
     pulsed = false;
   }
-  registers[7].i = (digitalRead(PUL1) == HIGH ? 1 : 0);
-  registers[8].i = (digitalRead(PUL2) == HIGH ? 1 : 0);
+  registers[7] = (digitalRead(PUL1) == HIGH ? 1 : 0);
+  registers[8] = (digitalRead(PUL2) == HIGH ? 1 : 0);
 
   int16_t accX, accY, accZ, gyroX, gyroY, gyroZ;
+  shiftFloat totalAcc, totalGyro, temp, hum;
+
   readAccelerometer(accX, accY, accZ);
   float trueAccX = accX * (9.81/16384);
   float trueAccY = accY * (9.81/16384);
   float trueAccZ = accZ * (9.81/16384);
-  float totalAcc = sqrt(pow(trueAccX,2) + pow(trueAccY,2) + pow(trueAccZ,2));
-  registers[9].f = totalAcc;
+
+  totalAcc.f = sqrt(pow(trueAccX,2) + pow(trueAccY,2) + pow(trueAccZ,2));
+  registers[9] = totalAcc.l >> 16;
+  registers[10] = totalAcc.l & 0xFFFF;
+
   readGyroscope(gyroX, gyroY, gyroZ);
   float trueGyroX = gyroX * (125/16384);
   float trueGyroY = gyroY * (125/16384);
   float trueGyroZ = gyroZ * (125/16384);
-  float totalGyro = sqrt(pow(trueGyroX,2) + pow(trueGyroY,2) + pow(trueGyroZ,2));
-  float totalgyro =((gyroX+gyroY+gyroZ)*125.0f)/(16384.0f*3);
-  registers[10].f = totalgyro;
-  registers[11].f = readTemp();
-  registers[12].f = readHum();
+
+  totalGyro.f = sqrt(pow(trueGyroX,2) + pow(trueGyroY,2) + pow(trueGyroZ,2));
+  registers[11] = totalGyro.l >> 16;
+  registers[12] = totalGyro.l & 0xFFFF;
+
+  temp.f = readTemp();
+  registers[13] = temp.l >> 16;
+  registers[14] = temp.l & 0xFFFF;
+
+  hum.f = readHum();
+  registers[15] = hum.l >> 16;
+  registers[16] = hum.l & 0xFFFF;
 }
 
 String getTCP(WiFiClient client) {
@@ -180,11 +183,11 @@ void interpretMessage(String msg, WiFiClient client) {
 
 void holdingRegisters(String msg, WiFiClient client) {
     modbus();
-    client.print("a2");
-    Serial.println(msg[11]);
-    for (int i = 0;i < msg[11]; i++) {
-      Serial.println(registers[i].i);
-      client.write(registers[i].i);
+    Serial.println("number of registers" + int(msg[11]));
+    for (int i = 0;i < msg[11]+1; i++) {
+      Serial.println(registers[i],HEX);
+      client.write(registers[i] >> 8);
+      client.write(registers[i] & 0xFF);
     }
     client.print("UU");
 }
@@ -192,8 +195,8 @@ void holdingRegisters(String msg, WiFiClient client) {
 void singleRegister(String msg, WiFiClient client) {
     int registerIndex = msg[9];
     Serial.println("Changed:" + String(registerIndex));
-    registers[registerIndex].i =  msg[11];
-    Serial.println("To:" + String(registers[registerIndex].i));
+    registers[registerIndex] =  msg[11];
+    Serial.println("To:" + String(registers[registerIndex]));
     modbus();
     String out = "a2";
     out += msg;
