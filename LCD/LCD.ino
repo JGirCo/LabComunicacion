@@ -1,3 +1,4 @@
+#include "oledLetters.h"
 #include <Wire.h>
 #define LCDADDRESS 0x3C
 #define I2C_SDA 25
@@ -21,7 +22,7 @@ void setup() {
   Wire.write(0x00);
   Wire.write(0x21);
   Wire.write(0x20);
-  Wire.write(0x2F);
+  Wire.write(0x27);
   Wire.endTransmission(true);
 
   Wire.beginTransmission(LCDADDRESS);
@@ -34,44 +35,17 @@ void setup() {
 }
 
 void loop() {
-  Wire.beginTransmission(LCDADDRESS);
-  Wire.write(0x40);
-  // Wire.write(B00000000);
-  // Wire.write(B00100100);
-  // Wire.write(B00100100);
-  // Wire.write(B10000001);
-  // Wire.write(B10000001);
-  // Wire.write(B01000010);
-  // Wire.write(B00111100);
-  // Wire.write(B00000000);
-  // Wire.write(B00000000);
-  // Wire.write(B00000000);
-  // Wire.write(B00000000);
-  // Wire.write(B00000000);
-  // Wire.write(B00000000);
-  // Wire.write(B00000000);
-  // Wire.write(B00000000);
-  // Wire.write(B00000000);
-
-Wire.write(B11000011);
-Wire.write(B10111101);
-Wire.write(B01000010);
-Wire.write(B10100101);
-Wire.write(B10000001);
-Wire.write(B10011001);
-Wire.write(B11011011);
-Wire.write(B01100110);
-Wire.write(B11011011);
-Wire.write(B10000001);
-Wire.write(B10011001);
-Wire.write(B10011001);
-Wire.write(B10011001);
-Wire.write(B10111101);
-Wire.write(B10011001);
-Wire.write(B10000001);
-  Wire.endTransmission(true);
-
-  delay(50);
+  // char characters[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:ñññ";
+  // int numCharacters = sizeof(characters) - 1;
+  // for (int i = 0; i < numCharacters; i++) {
+  //   displayChar(characters[i]);
+  //   delay(500);
+  // }
+  printOLED("TEMP:25.6", 0);
+  printOLED("TEMP2:25.6", 1);
+  printOLED("HUM:3.5", 2);
+  printOLED("ACC:9.81", 3);
+  delay(500);
 }
 
 void sendCommand(uint8_t command) {
@@ -155,4 +129,41 @@ void initializeLCD() {
   Wire.write(0xAF);
   Wire.endTransmission();
 
+}
+
+void displayChar(char c){
+  const byte* bitmap = getCharBitmap(c);
+  Wire.beginTransmission(LCDADDRESS);
+  Wire.write(0x40);
+
+  for (int i = 0; i < 8; i++) {
+    Wire.write(bitmap[i]);
+  }
+  Wire.endTransmission(true);
+}
+
+void printOLED(String string, int page){
+  int strLength = string.length();
+
+  Wire.beginTransmission(LCDADDRESS);
+  Wire.write(0x00);
+  Wire.write(0x22);
+  Wire.write(page);
+  Wire.write(page);
+  Wire.endTransmission(true);
+  for(int i = 0; i < strLength; i++){
+    Wire.beginTransmission(LCDADDRESS);
+    Wire.write(0x00);
+    Wire.write(0x21);
+    Wire.write(i*9);
+    Wire.write(i*9+8);
+    Wire.endTransmission(true);
+
+    displayChar(string[i]);
+
+    Wire.beginTransmission(LCDADDRESS);
+    Wire.write(0x40);
+    Wire.write(0x00);
+    Wire.endTransmission(true);
+  }
 }
