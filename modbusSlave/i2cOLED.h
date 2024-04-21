@@ -4,25 +4,53 @@
 #define I2C_SDA 25
 #define I2C_SCL 26
 int num = 1;
-void setup() {
-  Wire.begin(I2C_SDA, I2C_SCL);
-  Serial.begin(115200);
+// void setup() {
+//   Wire.begin(I2C_SDA, I2C_SCL);
+//   Serial.begin(115200);
+//
+//   initializeOLED();
+//   for (uint16_t i=0; i<=128*8;i++){
+//     Wire.beginTransmission(OLEDADDRESS);
+//     Wire.write(0x40);
+//     Wire.write(0x00);
+//     Wire.endTransmission();
+//   }
+//   // sendCommand(0xAE);
+//   // sendCommand(0xAf);
+//   // sendCommand(0xA7);
+//   Wire.beginTransmission(OLEDADDRESS);
+//   Wire.write(0x00);
+//   Wire.write(0x21);
+//   Wire.write(0x20);
+//   Wire.write(0x27);
+//   Wire.endTransmission(true);
+//
+//   Wire.beginTransmission(OLEDADDRESS);
+//   Wire.write(0x00);
+//   Wire.write(0x22);
+//   Wire.write(0x00);
+//   Wire.write(0x00);
+//   Wire.endTransmission(true);
+//
+// }
 
-  initializeOLED();
-  clearOLED();
-}
-
-void loop() {
-  delay(2000);
-  printOLED("HOLA SAMU", 0);
-  delay(1000);
-  printOLED("ME HACES", 1);
-  delay(1000);
-  printOLED("MUY FELIZ", 2);
-  // printOLED("HUM:3.5", 2);
-  // printOLED("ACC:9.81", 3);
-  delay(500);
-}
+// void loop() {
+//   // char characters[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:ñññ";
+//   // int numCharacters = sizeof(characters) - 1;
+//   // for (int i = 0; i < numCharacters; i++) {
+//   //   displayChar(characters[i]);
+//   //   delay(500);
+//   // }
+//   delay(2000);
+//   printOLED("HOLA SAMU", 0);
+//   delay(1000);
+//   printOLED("ME HACES", 1);
+//   delay(1000);
+//   printOLED("MUY FELIZ", 2);
+//   // printOLED("HUM:3.5", 2);
+//   // printOLED("ACC:9.81", 3);
+//   delay(500);
+// }
 
 void sendCommand(uint8_t command) {
   Wire.beginTransmission(OLEDADDRESS);

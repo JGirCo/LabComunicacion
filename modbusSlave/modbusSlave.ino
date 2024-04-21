@@ -1,7 +1,8 @@
 #include <WiFi.h>
 #include <HardwareSerial.h>
 #include "i2cSI7021.h"
-#include "i2cMPU9250.h"
+#include "spiMPU9250.h"
+#include "i2cOLED.h"
 
 #define I2C_SDA 25
 #define I2C_SCL 26
@@ -23,10 +24,10 @@
 
 
 bool pulsed = false;
-#define LED1 18
-#define LED2 19
-#define PUL1 22
-#define PUL2 23
+#define LED1 2
+#define LED2 4
+#define PUL1 0
+#define PUL2 15
 
 const char* ssid = "Pixel_5028";
 const char* password = "romeo1234";
@@ -55,6 +56,21 @@ void setup() {
 
   Serial.println();
   Serial.println();
+  initializeOLED();
+  initializeSi7021();
+
+  SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI, PIN_CS); // Inicializar SPI
+  pinMode(PIN_CS, OUTPUT);
+  digitalWrite(PIN_CS, HIGH); // Desactivar el chip select inicialmente
+  setupMPU9250();
+
+  clearOLED();
+  printOLED("INITIALIZED", 0);
+  delay(500);
+  clearOLED();
+
+  modbus();
+
   Serial.print("Connecting to ");
   Serial.println(ssid);
 
@@ -70,12 +86,11 @@ void setup() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
   server.begin();
-  initializeSi7021();
-  setupMPU9250();
 }
 
 void loop() {
 
+  modbus();
   WiFiClient client = server.available();  // listen for incoming clients
 
   if (client) {                     // if you get a client,
@@ -112,6 +127,7 @@ void modbus() {
     Serial.println(registers[12]);
   }
 
+
   registers[4] = int(millis()/1000);
 
   if (digitalRead(PUL1) == HIGH) {
@@ -127,26 +143,29 @@ void modbus() {
   registers[7] = (digitalRead(PUL1) == HIGH ? 1 : 0);
   registers[8] = (digitalRead(PUL2) == HIGH ? 1 : 0);
 
-  int16_t accX, accY, accZ, gyroX, gyroY, gyroZ;
   shiftFloat totalAcc, totalGyro, temp, hum;
 
-  readAccelerometer(accX, accY, accZ);
-  float trueAccX = accX * (9.81/16384);
-  float trueAccY = accY * (9.81/16384);
-  float trueAccZ = accZ * (9.81/16384);
+  float accelData[3];
+  readAccelData(accelData);
+  Serial.println(accelData[2]);
+  float trueAccX = accelData[0] * (9.81/16384);
+  float trueAccY = accelData[1] * (9.81/16384);
+  float trueAccZ = accelData[2] * (9.81/16384);
 
   totalAcc.f = sqrt(pow(trueAccX,2) + pow(trueAccY,2) + pow(trueAccZ,2));
   registers[9] = totalAcc.l >> 16;
   registers[10] = totalAcc.l & 0xFFFF;
 
-  readGyroscope(gyroX, gyroY, gyroZ);
-  float trueGyroX = gyroX * (125/16384);
-  float trueGyroY = gyroY * (125/16384);
-  float trueGyroZ = gyroZ * (125/16384);
+  float gyroData[3];
+  readGyroData(gyroData);
+  float trueGyroX = gyroData[0] * (125/16384);
+  float trueGyroY = gyroData[1] * (125/16384);
+  float trueGyroZ = gyroData[2] * (125/16384);
 
   totalGyro.f = sqrt(pow(trueGyroX,2) + pow(trueGyroY,2) + pow(trueGyroZ,2));
   registers[11] = totalGyro.l >> 16;
   registers[12] = totalGyro.l & 0xFFFF;
+
 
   temp.f = readTemp();
   registers[13] = temp.l >> 16;
@@ -155,6 +174,10 @@ void modbus() {
   hum.f = readHum();
   registers[15] = hum.l >> 16;
   registers[16] = hum.l & 0xFFFF;
+
+  printOLED("TEMP: " + String(temp.f,2),0);
+  printOLED("ACC: " + String(totalAcc.f,2),1);
+  printOLED("777777" + String(totalAcc.f,2),2);
 }
 
 String getTCP(WiFiClient client) {
