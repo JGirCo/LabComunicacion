@@ -7,40 +7,6 @@
 #define READ_USER_REG 0xE7
 #define WRITE_USER_REG 0xE6
 
-// void setup() {
-//   // Wire.begin(I2C_SDA,I2C_SCL);
-//   Wire.begin();
-//   Serial.begin(9600);
-//   while (!Serial) {
-//     ;  // wait for serial port to connect. Needed for native USB port only
-//   }
-//   Serial.println("Hello world");
-//   initializeSi7021();
-// }
-
-// void loop() {
-//
-//       Temp = readTemperature();
-//       delay (1000);
-//
-//       Wire.beginTransmission(0x40);
-//       Wire.write(0xE5 );
-//       Wire.endTransmission();
-//       delay(100);
-//       Wire.requestFrom(0x40, (uint8_t) 2);
-//       delay(100);
-//       if(Wire.available() == 2) {
-//            int   Hum      = (Wire.read() << 8 );
-//                  Hum      |= Wire.read();
-//                  float humidity = ((Hum * 125.0) / 65536) - 6;
-//         Serial.print(" My Hum: ");
-//         Serial.println(humidity);
-//       }
-//       delay (1000);
-//
-// }
-
-
 void initializeSi7021() {
   // Leer el registro de usuario actual
   Wire.beginTransmission(SI7021_ADDR);

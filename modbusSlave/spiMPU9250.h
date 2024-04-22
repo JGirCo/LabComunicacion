@@ -8,7 +8,9 @@
 #define MPU9250_SPI_READ  0x80
 #define PWR_MGMT_1        0x6B
 #define GYRO_CONFIG       0x1B
+#define GYRO_XOUT_H       0x1B
 #define ACCEL_CONFIG      0x1C
+#define ACCEL_XOUT_H 0x3B
 #define CONFIG            0x1A
 
 // void setup() {
@@ -43,31 +45,24 @@
 //   Serial.println(gyroData[2]);
 // }
 //
-void readAccelData(float* accelData) {
-  // Activar chip select
+
+void readAccelerometer(int16_t &ax, int16_t &ay, int16_t &az) {
   digitalWrite(PIN_CS, LOW);
-
-  // Leer datos del acelerómetro
-  SPI.transfer(MPU9250_SPI_READ | 0x3B); // Registro de inicio del acelerómetro
-  for (int i = 0; i < 3; i++) {
-    accelData[i] = SPI.transfer(0) << 8 | SPI.transfer(0);
-  }
-
-  // Desactivar chip select
+  SPI.transfer(MPU9250_SPI_READ | ACCEL_XOUT_H);  // Establecer el bit MSB para indicar una lectura
+  ax = SPI.transfer16(0);                         // Leer datos de aceleración en el eje X
+  ay = SPI.transfer16(0);                         // Leer datos de aceleración en el eje Y
+  az = SPI.transfer16(0);                         // Leer datos de aceleración en el eje Z
   digitalWrite(PIN_CS, HIGH);
 }
 
-void readGyroData(float* gyroData) {
+void readGyroscope(int16_t &ax, int16_t &ay, int16_t &az) {
   // Activar chip select
   digitalWrite(PIN_CS, LOW);
-
   // Leer datos del giroscopio
-  SPI.transfer(MPU9250_SPI_READ | 0x43); // Registro de inicio del giroscopio
-  for (int i = 0; i < 3; i++) {
-    gyroData[i] = SPI.transfer(0) << 8 | SPI.transfer(0);
-  }
-
-  // Desactivar chip select
+  SPI.transfer(MPU9250_SPI_READ | GYRO_XOUT_H); // Registro de inicio del giroscopio
+  ax = SPI.transfer16(0);                         // Leer datos de aceleración en el eje X
+  ay = SPI.transfer16(0);                         // Leer datos de aceleración en el eje Y
+  az = SPI.transfer16(0);                         // Leer datos de aceleración en el eje Z
   digitalWrite(PIN_CS, HIGH);
 }
 
