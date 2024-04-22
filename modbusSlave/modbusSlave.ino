@@ -27,8 +27,8 @@
 bool pulsed = false;
 #define LED1 2
 #define LED2 4
-#define PUL1 0
-#define PUL2 15
+#define PUL1 21
+#define PUL2 22
 
 const char* ssid = "Pixel_5028";
 const char* password = "romeo1234";

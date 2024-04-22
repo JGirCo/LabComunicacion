@@ -19,7 +19,7 @@ def hex2bytes(hex_message):
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Connect the socket to the port where the server is listening
-server_address = ("192.168.74.183", 502)
+server_address = ("192.168.156.183", 502)
 print("connecting to {} port {}".format(*server_address))
 sock.connect(server_address)
 
@@ -27,11 +27,21 @@ with sock:
     while True:
         function = input("Presiona h para ver registros, s para cambiar un registro: ")
         if function == "h":
-            register = input("presiona el numero de registros a imprimir: ")
+            register = input(
+                "presiona el numero (hex de dos dígitos) de registros a imprimir: "
+            )
+            if len(register) != 2:
+                print("Número inválido")
+                continue
             msg = hex2bytes("6132 0000 0000 0006 0103 0000 00{} 5555".format(register))
         elif function == "s":
-            register = input("presiona en numero del registro a cambiar: ")
-            value = input("presiona el nuevo valor del registro: ")
+            register = input(
+                "presiona en numero (hex de dos dígitos) del registro a cambiar: "
+            )
+            value = input("presiona el nuevo valor (hex de dos dígitos) del registro: ")
+            if len(register) != 2:
+                print("Valor inválido")
+                continue
             msg = hex2bytes(
                 "6132 0000 0000 0006 0106 00{} 00{} 5555".format(register, value)
             )
