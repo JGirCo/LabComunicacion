@@ -19,7 +19,6 @@
         ];
 
         shellHook = ''
-          zsh
           echo "Entered Arduino development shell"
         '';
       };
