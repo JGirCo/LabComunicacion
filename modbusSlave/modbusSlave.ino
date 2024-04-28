@@ -1,9 +1,14 @@
 #include <WiFi.h>
 #include <HardwareSerial.h>
+#include <BLEDevice.h>
+#include <BLEUtils.h>
+#include <BLEServer.h>
+
 #include "i2cSI7021.h"
 #include "spiMPU9250.h"
 #include "i2cOLED.h"
 #include "spiBMP280.h"
+#include "bluetooth.h"
 
 #define I2C_SDA 25
 #define I2C_SCL 26
@@ -41,6 +46,9 @@ union shiftFloat {
 };
 unsigned int registers[21];
 
+BLECharacteristic *pTemperatureCharacteristic;
+BLECharacteristic *pHumidityCharacteristic;
+BLECharacteristic *pPressureCharacteristic;
 
 void setup() {
   registers[3] = 62;
@@ -72,6 +80,8 @@ void setup() {
   printOLED("INITIALIZED", 0);
   delay(500);
   clearOLED();
+
+  setupBluetooth();
 
   modbus();
 
@@ -182,6 +192,10 @@ void modbus() {
   registers[19] = pres.l >> 16;
   registers[20] = pres.l & 0xFFFF;
 
+  shareValue(pPressureCharacteristic,pres.f);
+  shareValue(pTemperatureCharacteristic,temp.f);
+  shareValue(pHumidityCharacteristic,hum.f);
+
   printOLED("ACC: " + String(totalAcc.f,2),0);
   printOLED("TEMP: " + String(temp.f,2),1);
   printOLED("TEMP2: " + String(temp2.f,2),2);
@@ -257,4 +271,31 @@ String int2char(int val) {
   char highByte = (val >> 8) & 0xFF;  // Extract the high byte
   char lowByte = val & 0xFF;          // Extract the low byte
   return ("" + highByte + lowByte);
+}
+
+void setupBluetooth() {
+  BLEDevice::init("JuanMa Termometro");
+  BLEServer *pServer = BLEDevice::createServer();
+  BLEService *pEnvSensService = pServer->createService("181A");
+
+  pTemperatureCharacteristic = pEnvSensService->createCharacteristic(
+    "2a1c",
+    BLECharacteristic::PROPERTY_READ |
+    BLECharacteristic::PROPERTY_NOTIFY
+  );
+
+  pHumidityCharacteristic = pEnvSensService->createCharacteristic(
+    "2a6f",
+    BLECharacteristic::PROPERTY_READ |
+    BLECharacteristic::PROPERTY_NOTIFY
+  );
+
+  pPressureCharacteristic = pEnvSensService->createCharacteristic(
+    "2a6d",
+    BLECharacteristic::PROPERTY_READ |
+    BLECharacteristic::PROPERTY_NOTIFY
+  );
+
+  pEnvSensService->start();
+  pServer->getAdvertising()->start();
 }
