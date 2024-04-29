@@ -73,28 +73,20 @@ void setupMPU9250() {
   Wire.write(0x00); // Escribe 0x00 para despertar el dispositivo
   Wire.endTransmission(true);
 
-  Serial.println("IMU inicializada");
-
   // Configura el rango del gdelay(100);iroscopio a ±250 grados/seg
   Wire.beginTransmission(MPU9250_ADDRESS);
   Wire.write(GYRO_CONFIG);
   Wire.write(0x00); // Configura el GYRO_CONFIG a 0x00
   Wire.endTransmission(true);
 
-  Serial.println("Giroscopio configurado");
-
   // Configura el rango del acelerómetro a ±2g
   Wire.beginTransmission(MPU9250_ADDRESS);
   Wire.write(ACCEL_CONFIG);
   Wire.write(0x00); // Configura el ACCEL_CONFIG a 0x00
   Wire.endTransmission(true);
-
-  Serial.println("Acelerómetro configurado");
   // Configura el filtro pasa-bajas y la tasa de muestreo
   Wire.beginTransmission(MPU9250_ADDRESS);
   Wire.write(CONFIG);
   Wire.write(0x01); // Configura el CONFIG a 0x01 para usar el filtro pasa-bajas
   Wire.endTransmission(true);
-
-  Serial.println("Filtro y taza de muestreo configurados");
 }

@@ -95,6 +95,4 @@ void setupMPU9250() {
   digitalWrite(PIN_CS, HIGH);
 
   delay(100);
-
-  Serial.println("MPU9250 configurado correctamente.");
 }

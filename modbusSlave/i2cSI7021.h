@@ -14,10 +14,8 @@ void initializeSi7021() {
   Wire.endTransmission();
   delay(25);
   Wire.requestFrom(SI7021_ADDR, 1);
-  Serial.println("Starting Configuration...");
   delay(25);
   if (Wire.available()) {
-    Serial.println("Configuration began");
     byte userReg = Wire.read(); // Leer el valor actual del registro de usuario
 
     // Configurar el calentador apagado y la resolución a 12 bits humedad, 14 bits temperatura
@@ -35,7 +33,6 @@ void initializeSi7021() {
     Wire.beginTransmission(0x40);
     Wire.write(0xFE); //0xE3
     Wire.endTransmission();
-    Serial.println("initilization sucessful");
   }
 
 }

@@ -85,19 +85,14 @@ void setup() {
 
   modbus();
 
-  Serial.print("Connecting to ");
   Serial.println(ssid);
 
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    Serial.print(".");
   }
 
-  Serial.println("");
-  Serial.println("WiFi connected.");
-  Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
   server.begin();
 }
@@ -111,16 +106,13 @@ void loop() {
     Serial.println("New Client.");  // print a message out the serial port
     while (client.connected()) {  // loop while the client's connected
       String data = getTCP(client);
-      Serial.println("-----------------------------------");
       printHEX(data);
-      Serial.println("-----------------------------------");
       registers[6] = int(millis()/1000);
       interpretMessage(data, client);
       modbus();
     }
     // close the connection:
     client.stop();
-    Serial.println("Client Disconnected.");
   }
 }
 
@@ -131,13 +123,9 @@ void modbus() {
     // for (int i = 0; i < 9; i++) {
     //   Serial.println(registers[i]);
     // }
-    Serial.print("Acc = ");
     Serial.println(registers[9]);
-    Serial.print("angularVel = ");
     Serial.println(registers[10]);
-    Serial.print("temp = ");
     Serial.println(registers[11]);
-    Serial.print("hum = ");
     Serial.println(registers[12]);
   }
 
@@ -146,7 +134,7 @@ void modbus() {
 
   if (digitalRead(PUL1) == HIGH) {
     if (!pulsed) {
-      Serial.println("pulsed!");
+      Serial.println(0);
       registers[5]++;
     }
     pulsed = true;
@@ -196,10 +184,14 @@ void modbus() {
   shareValue(pTemperatureCharacteristic,temp.f);
   shareValue(pHumidityCharacteristic,hum.f);
 
-  printOLED("ACC: " + String(totalAcc.f,2),0);
-  printOLED("TEMP: " + String(temp.f,2),1);
-  printOLED("TEMP2: " + String(temp2.f,2),2);
-  printOLED("PRES: " + String(pres.f,2),3);
+  printOLED("ACC:",0);
+  printOLED( String(totalAcc.f,2),0);
+  printOLED("TEMP: ",1);
+  printOLED( String(temp.f,2),1);
+  printOLED("TEMP2: ",2);
+  printOLED( String(temp2.f,2),2);
+  printOLED("PRES: ",3);
+  printOLED( String(pres.f,2),3);
 }
 
 String getTCP(WiFiClient client) {
@@ -228,7 +220,7 @@ void interpretMessage(String msg, WiFiClient client) {
 
 void holdingRegisters(String msg, WiFiClient client) {
     modbus();
-    Serial.println("number of registers" + int(msg[11]));
+    Serial.println(int(msg[11]));
     for (int i = 0;i < msg[11]+1; i++) {
       Serial.println(registers[i],HEX);
       client.write(registers[i] >> 8);
@@ -239,14 +231,13 @@ void holdingRegisters(String msg, WiFiClient client) {
 
 void singleRegister(String msg, WiFiClient client) {
     int registerIndex = msg[9];
-    Serial.println("Changed:" + String(registerIndex));
+    // Serial.println("Changed:" + String(registerIndex));
     registers[registerIndex] =  msg[11];
-    Serial.println("To:" + String(registers[registerIndex]));
+    // Serial.println("To:" + String(registers[registerIndex]));
     modbus();
-    String out = "a2";
-    out += msg;
-    client.print(out);
-    printHEX(out);
+    client.write(61);
+    client.write(32);
+    client.print(msg);
 }
 
 void printHEX(String str) {
@@ -256,7 +247,6 @@ void printHEX(String str) {
         }
     Serial.print(str[i], HEX);
   }
-  Serial.println("");
 }
 
 char hex2char(String hexString) {
