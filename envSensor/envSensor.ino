@@ -6,7 +6,7 @@
 #include "i2cSI7021.h"
 #include "spiBMP280.h"
 #include "bluetooth.h"
-#include ""
+#include "spiMPU9250.h"
 
 #define I2C_SDA 25
 #define I2C_SCL 26
